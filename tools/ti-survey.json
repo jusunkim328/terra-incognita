@@ -1,0 +1,15 @@
+{
+  "id": "ti-survey",
+  "type": "esql",
+  "description": "STEP 1 SURVEY 도구. 사용자 쿼리에 대해 도메인별 시맨틱 검색 결과를 집계하여 '연구 지형도'를 생성합니다. 각 도메인의 논문 수와 평균 관련도 점수를 반환하여, 에이전트가 '의미 있는 공백(Gap)' 구간을 판별할 수 있게 합니다. 5단계 워크플로우의 첫 번째 도구로, 반드시 가장 먼저 호출하세요.",
+  "tags": ["terra-incognita", "survey", "gap-detection"],
+  "configuration": {
+    "query": "FROM ti-papers METADATA _score | WHERE MATCH(content, ?query) | STATS paper_count = COUNT(*), avg_score = AVG(_score) BY domain | SORT avg_score DESC",
+    "params": {
+      "query": {
+        "type": "text",
+        "description": "검색할 연구 주제. 핵심 개념과 관련 기술 용어를 포함. 예: 'Alzheimer disease treatment tau protein immunotherapy'"
+      }
+    }
+  }
+}

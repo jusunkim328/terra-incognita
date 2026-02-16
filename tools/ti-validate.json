@@ -1,0 +1,19 @@
+{
+  "id": "ti-validate",
+  "type": "esql",
+  "description": "STEP 4 VALIDATE 도구. 두 카테고리 간 교차 논문 수를 카운트하여 기존 브리지의 존재 여부를 검증합니다. 에이전트는 추가로 platform.core.execute_esql로 categories LIKE 패턴 매칭을 실행하여 cross-list 논문도 확인합니다. 교차 논문이 적을수록 참신한 발견입니다.",
+  "tags": ["terra-incognita", "validate", "cross-list"],
+  "configuration": {
+    "query": "FROM ti-papers | WHERE primary_category IN (?category_a, ?category_b) | STATS total = COUNT(*) BY primary_category",
+    "params": {
+      "category_a": {
+        "type": "keyword",
+        "description": "검증할 첫 번째 arXiv 카테고리. 예: 'q-bio.NC'"
+      },
+      "category_b": {
+        "type": "keyword",
+        "description": "검증할 두 번째 arXiv 카테고리. 예: 'cs.AI'"
+      }
+    }
+  }
+}

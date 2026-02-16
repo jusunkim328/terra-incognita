@@ -1,0 +1,21 @@
+{
+  "mappings": {
+    "properties": {
+      "gap_id":                  { "type": "keyword" },
+      "bridge_id":               { "type": "keyword" },
+      "hypothesis_title":        { "type": "text" },
+      "gap_summary":             { "type": "text" },
+      "innovation_vacuum_index": { "type": "float" },
+      "top_bridges":             { "type": "nested",
+        "properties": {
+          "concept":             { "type": "text" },
+          "serendipity_probability": { "type": "float" }
+        }
+      },
+      "evidence_paper_ids":      { "type": "keyword" },
+      "confidence":              { "type": "keyword" },
+      "social_share_text":       { "type": "text" },
+      "created_at":              { "type": "date" }
+    }
+  }
+}

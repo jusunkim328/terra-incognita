@@ -1,0 +1,19 @@
+{
+  "id": "ti-bridge",
+  "type": "esql",
+  "description": "STEP 3 BRIDGE 도구. Gap 접점 개념으로 다른 도메인에서 '다리 논문'을 탐색합니다. source_domain을 제외한 모든 도메인에서 bridge_concept과 관련된 논문을 검색합니다. 에이전트는 Self-Correction Protocol로 '키워드만 일치하고 메커니즘이 무관한' 후보를 폐기하고 재탐색합니다.",
+  "tags": ["terra-incognita", "bridge", "cross-domain"],
+  "configuration": {
+    "query": "FROM ti-papers METADATA _score | WHERE MATCH(content, ?bridge_concept) AND domain != ?source_domain | SORT _score DESC | LIMIT 10 | KEEP arxiv_id, title, abstract, domain, primary_category, categories, _score, published",
+    "params": {
+      "bridge_concept": {
+        "type": "text",
+        "description": "Gap 접점 개념. ti-detect 결과에서 추출한 핵심 메커니즘이나 방법론. 예: 'optogenetic stimulation neural circuit modulation'"
+      },
+      "source_domain": {
+        "type": "keyword",
+        "description": "원래 Gap이 발견된 도메인. 이 도메인을 제외하고 검색합니다"
+      }
+    }
+  }
+}

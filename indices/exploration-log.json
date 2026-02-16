@@ -1,0 +1,24 @@
+{
+  "mappings": {
+    "properties": {
+      "timestamp":           { "type": "date" },
+      "conversation_id":     { "type": "keyword" },
+      "action":              { "type": "keyword" },
+      "query":               { "type": "text" },
+      "domains_searched":    { "type": "keyword" },
+      "gaps_found":          { "type": "integer" },
+      "bridges_found":       { "type": "integer" },
+      "proposals_generated": { "type": "integer" },
+      "thought_log":         { "type": "text" },
+      "self_corrections":    { "type": "integer" },
+      "parameter_adjustments": {
+        "properties": {
+          "threshold_before": { "type": "float" },
+          "threshold_after":  { "type": "float" },
+          "reason":           { "type": "text" }
+        }
+      },
+      "previous_gap_link":   { "type": "keyword" }
+    }
+  }
+}

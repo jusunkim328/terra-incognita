@@ -1,0 +1,17 @@
+{
+  "mappings": {
+    "properties": {
+      "content":            { "type": "semantic_text", "inference_id": ".elser-2-elastic" },
+      "title":              { "type": "text", "fields": { "keyword": { "type": "keyword" } } },
+      "abstract":           { "type": "text" },
+      "arxiv_id":           { "type": "keyword" },
+      "primary_category":   { "type": "keyword" },
+      "categories":         { "type": "keyword" },
+      "domain":             { "type": "keyword" },
+      "published":          { "type": "date" },
+      "authors":            { "type": "text" },
+      "viz_x":              { "type": "float" },
+      "viz_y":              { "type": "float" }
+    }
+  }
+}

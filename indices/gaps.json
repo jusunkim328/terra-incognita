@@ -1,0 +1,27 @@
+{
+  "mappings": {
+    "properties": {
+      "query":              { "type": "semantic_text", "inference_id": ".elser-2-elastic" },
+      "query_text":         { "type": "text" },
+      "source_domain":      { "type": "keyword" },
+      "gap_domain":         { "type": "keyword" },
+      "gap_score":          { "type": "float" },
+      "innovation_vacuum_index": { "type": "float" },
+      "percentile_rank":    { "type": "byte" },
+      "vacuum_components": {
+        "properties": {
+          "relevance":      { "type": "float" },
+          "void":           { "type": "float" },
+          "density":        { "type": "integer" }
+        }
+      },
+      "paper_count":        { "type": "integer" },
+      "adjacent_paper_ids": { "type": "keyword" },
+      "gap_concept":        { "type": "text" },
+      "detected_at":        { "type": "date" },
+      "status":             { "type": "keyword" },
+      "last_watch_at":       { "type": "date" },
+      "filling_paper_count": { "type": "integer" }
+    }
+  }
+}

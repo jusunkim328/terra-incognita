@@ -1,0 +1,26 @@
+{
+  "mappings": {
+    "properties": {
+      "gap_id":             { "type": "keyword" },
+      "bridge_concept":     { "type": "semantic_text", "inference_id": ".elser-2-elastic" },
+      "bridge_text":        { "type": "text" },
+      "bridge_paper_ids":   { "type": "keyword" },
+      "source_domain":      { "type": "keyword" },
+      "target_domain":      { "type": "keyword" },
+      "novelty_score":      { "type": "float" },
+      "serendipity_probability": { "type": "float" },
+      "probability_components": {
+        "properties": {
+          "similarity":     { "type": "float" },
+          "novelty":        { "type": "float" },
+          "evidence":       { "type": "integer" }
+        }
+      },
+      "is_existing_bridge": { "type": "boolean" },
+      "cross_paper_count":  { "type": "integer" },
+      "hypothesis":         { "type": "text" },
+      "confidence":         { "type": "keyword" },
+      "created_at":         { "type": "date" }
+    }
+  }
+}
