@@ -117,9 +117,9 @@
 | **OSI 라이선스** | 충족 | MIT License (LICENSE 파일 존재) |
 | **오픈소스/합성 데이터** | 충족 | arXiv 오픈 API + 합성 시드 데이터 |
 | **공개 저장소** | 미완 | 제출 전 GitHub public 전환 필요 |
-| **~300단어 설명** | 준비됨 | `demo/devpost-description.md` |
-| **3분 데모 영상** | 미완 | `demo/demo-script.md` 기반 제작 필요 |
-| **소셜 미디어 포스트** | 준비됨 | `demo/social-post.md` (게시 필요) |
+| **~300단어 설명** | 미완 | Devpost 제출 시 작성 |
+| **3분 데모 영상** | 미완 | 제작 필요 |
+| **소셜 미디어 포스트** | 미완 | 게시 필요 |
 | **작동 데모** | 충족 | Elastic Cloud Hosted + Kibana Agent Builder UI |
 
 ### 추가 활용 ES 기능 (가산 기대)
@@ -142,9 +142,9 @@
 - [x] LICENSE 파일 (MIT) — 저장소 최상위에 존재
 - [x] `.env`는 `.env.example`만 커밋 (실제 크레덴셜 제외)
 - [x] 시드 데이터가 합성(synthetic)임을 README에 명시
-- [x] ~300단어 Devpost 설명 (`demo/devpost-description.md`)
+- [ ] ~300단어 Devpost 설명
 - [ ] 3분 데모 영상 제작 및 업로드 (YouTube/Vimeo)
-- [x] 소셜 미디어 포스트 초안 (`demo/social-post.md`)
+- [ ] 소셜 미디어 포스트
 - [ ] 소셜 미디어 실제 게시 + URL 확보
 - [ ] 심사위원용 작동 데모 환경 확인
 - [ ] Devpost 제출 폼 작성 및 제출

@@ -16,7 +16,8 @@ ES_URL="${ES_URL:?ES_URL is required}"
 ES_API_KEY="${ES_API_KEY:?ES_API_KEY is required}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-300}"
 
-QUERY="${1:-알츠하이머 치료에서 아직 탐험되지 않은 연구 방향을 찾아줘}"
+DEFAULT_QUERY="Find unexplored research directions in Alzheimer's treatment"
+QUERY="${1:-$DEFAULT_QUERY}"
 RESPONSE_FILE="/tmp/ti-e2e-response.json"
 PASS=0
 FAIL=0
@@ -133,7 +134,7 @@ fi
 
 SAVE_CONV_ID="${CONV_ID:-}"
 if [ -z "$SAVE_CONV_ID" ]; then
-  # Discovery Card 응답에서 conversation_id 가져오기
+  # Get conversation_id from Discovery Card response
   SAVE_CONV_ID=$(python3 -c "import json; print(json.load(open('${DISCOVERY_FILE:-$RESPONSE_FILE}'))['conversation_id'])" 2>/dev/null || echo "")
 fi
 
@@ -141,15 +142,15 @@ if [ -n "$SAVE_CONV_ID" ]; then
   echo ""
   echo "[4/4] Testing ti-save-results..."
 
-  # 저장 전 doc count 기록
+  # Record doc count before save
   GAPS_BEFORE=$(curl -s --max-time 10 "${ES_URL}/ti-gaps/_count" -H "Authorization: ApiKey ${ES_API_KEY}" | python3 -c "import json,sys; print(json.load(sys.stdin)['count'])")
   LOGS_BEFORE=$(curl -s --max-time 10 "${ES_URL}/ti-exploration-log/_count" -H "Authorization: ApiKey ${ES_API_KEY}" | python3 -c "import json,sys; print(json.load(sys.stdin)['count'])")
 
-  # 에이전트에게 저장 요청
+  # Request save from agent
   SAVE_FILE="/tmp/ti-e2e-save.json"
   python3 -c "
 import json
-req = {'agent_id': 'terra-incognita', 'conversation_id': '$SAVE_CONV_ID', 'input': '결과를 저장해줘'}
+req = {'agent_id': 'terra-incognita', 'conversation_id': '$SAVE_CONV_ID', 'input': 'Save the results'}
 json.dump(req, open('$SAVE_FILE', 'w'), ensure_ascii=False)
 "
   save_http=$(curl -s -o /dev/null -w "%{http_code}" --max-time "$CURL_TIMEOUT" \
@@ -162,10 +163,10 @@ json.dump(req, open('$SAVE_FILE', 'w'), ensure_ascii=False)
 
   echo "  Save request sent (HTTP $save_http)"
 
-  # ES 반영 대기 (refresh)
+  # Wait for ES to reflect changes (refresh)
   sleep 2
 
-  # 저장 후 doc count 비교
+  # Compare doc count after save
   GAPS_AFTER=$(curl -s --max-time 10 "${ES_URL}/ti-gaps/_count" -H "Authorization: ApiKey ${ES_API_KEY}" | python3 -c "import json,sys; print(json.load(sys.stdin)['count'])")
   LOGS_AFTER=$(curl -s --max-time 10 "${ES_URL}/ti-exploration-log/_count" -H "Authorization: ApiKey ${ES_API_KEY}" | python3 -c "import json,sys; print(json.load(sys.stdin)['count'])")
 

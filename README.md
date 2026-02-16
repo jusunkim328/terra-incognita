@@ -24,7 +24,7 @@ Penicillin = gap in bacteriology + mycology. CRISPR = gap in gene editing + bact
 
 Terra Incognita is an **Autonomous Scout** that maps the landscape of scientific literature, identifies meaningful research gaps, and proposes cross-disciplinary bridges to fill them — complete with quantitative scoring and novelty verification.
 
-It uses Elasticsearch's semantic search, ES|QL analytics, and Agent Builder to automate the entire discovery pipeline: from surveying 6,000+ papers across domains, to detecting "meaningful voids" where research *should* exist but doesn't, to finding unexpected connections from distant fields.
+It uses Elasticsearch's semantic search, ES|QL analytics, and Agent Builder to automate the entire discovery pipeline: from surveying 17,000+ papers across 12 domains, to detecting "meaningful voids" where research *should* exist but doesn't, to finding unexpected connections from distant fields.
 
 ---
 
@@ -208,7 +208,7 @@ The agent automatically generates a 1-page shareable Discovery Card for each fin
 
 | Index | Purpose |
 |-------|---------|
-| `ti-papers` | Paper corpus (6,000+ papers, 6 domains, `semantic_text` + ELSER) |
+| `ti-papers` | Paper corpus (17,000+ papers, 12 domains, `semantic_text` + ELSER) |
 | `ti-gaps` | Detected research gaps with Innovation Vacuum Index |
 | `ti-bridges` | Cross-domain bridges with Serendipity Probability |
 | `ti-exploration-log` | Audit log of agent exploration sessions + Thought Log |
@@ -290,28 +290,12 @@ bash setup/09-scheduler.sh    # Daily Discovery + Gap Watch cron jobs
 
 ---
 
-## Demo Scenarios
-
-The demo is structured as a **3-minute presentation in 4 acts**:
-
-| Act | Title | Duration | What Happens | Killing Point |
-|-----|-------|----------|-------------|---------------|
-| **1** | The Map | 0:00 - 0:40 | Query input, domain relevance bar chart | Landscape at a glance |
-| **2** | The Gap | 0:40 - 1:30 | Meaningful gap discovery, Innovation Vacuum Index | "Top 2%" percentile |
-| **3** | The Bridge | 1:30 - 2:20 | Cross-domain bridge, Self-Correction, "0 cross-papers" | Agent thinks for itself |
-| **4** | The Watch | 2:20 - 3:00 | Backtest + Gap Watch + Discovery Card | "Not a demo — a real workflow" |
-
-See [`demo/demo-script.md`](demo/demo-script.md) for the full demo script.
-
----
-
 ## Project Structure
 
 ```
 terra-incognita/
 ├── agent/           # Agent definition (9 rules)
 ├── dashboard/       # Kibana dashboard NDJSON
-├── demo/            # Demo script + Devpost description + social post
 ├── docs/            # Hackathon reference documentation
 ├── indices/         # Index mappings
 ├── ingest/          # Data pipeline (arXiv collector + NDJSON)
@@ -338,7 +322,7 @@ terra-incognita/
 | **Cloud Scheduler** | Daily automated exploration (ti_daily_discovery) + gap monitoring (ti_gap_watch) |
 | **Agent Builder** | Tool registration, agent management, multi-step reasoning |
 | **Kibana 9.x** | Dashboard visualization, agent conversation UI |
-| **arXiv API** | Paper data source (6 domains, 6,000+ papers) |
+| **arXiv API** | Paper data source (12 domains, 17,000+ papers) |
 
 ---
 

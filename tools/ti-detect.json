@@ -1,18 +1,18 @@
 {
   "id": "ti-detect",
   "type": "esql",
-  "description": "STEP 2 DETECT 도구. ti-survey에서 관련도 0.05~0.25 구간으로 식별된 Gap 도메인 내 소수 관련 논문을 추출합니다. 에이전트는 이 결과로 접점 개념을 분석하고 Innovation Vacuum Index를 계산합니다. query와 gap_domain 두 파라미터가 필요합니다.",
+  "description": "STEP 2 DETECT tool. Extracts sparse related papers within gap domains identified at relevance 0.05–0.25 by ti-survey. The agent analyzes contact concepts from these results and computes the Innovation Vacuum Index. Requires both query and gap_domain parameters.",
   "tags": ["terra-incognita", "detect", "gap-detection"],
   "configuration": {
     "query": "FROM ti-papers METADATA _score | WHERE MATCH(content, ?query) AND domain == ?gap_domain | SORT _score DESC | LIMIT 10 | KEEP arxiv_id, title, abstract, primary_category, categories, _score, published",
     "params": {
       "query": {
         "type": "text",
-        "description": "STEP 1에서 사용한 연구 주제 쿼리"
+        "description": "Research topic query used in STEP 1"
       },
       "gap_domain": {
         "type": "keyword",
-        "description": "Gap으로 식별된 도메인명. ti-survey 결과에서 avg_score 0.05~0.25 구간의 domain 값"
+        "description": "Domain name identified as a gap. Use the domain value from ti-survey results in the avg_score 0.05–0.25 range"
       }
     }
   }

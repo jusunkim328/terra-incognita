@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Terra Incognita arXiv Collector
-Collects 6,000 papers (6 domains × 1,000) and bulk indexes to Elasticsearch.
+Collects papers (12 domains × 1,000) and bulk indexes to Elasticsearch.
 
 Usage:
   python3 arxiv_collector.py                    # Recent papers (default)
@@ -36,6 +36,12 @@ DOMAINS = {
     "quantum_computing": "cat:quant-ph",
     "ecology": "cat:q-bio.PE",
     "robotics": "cat:cs.RO",
+    "bioinformatics": "cat:q-bio.QM",
+    "energy_systems": "cat:physics.app-ph",
+    "astrophysics": "cat:astro-ph",
+    "social_networks": "cat:cs.SI",
+    "neural_computing": "cat:cs.NE",
+    "artificial_intelligence": "cat:cs.AI",
 }
 
 MAX_PER_DOMAIN = 1000

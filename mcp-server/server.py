@@ -1,16 +1,16 @@
 """Terra Incognita — MCP Server
 
-Agent Builder의 esql 도구는 읽기 전용(ES|QL = SELECT only).
-Elastic Workflows 실행 엔진 버그(Hippocampus에서 확인)로,
-MCP 서버로 쓰기 기능을 구현한다.
+Agent Builder's esql tools are read-only (ES|QL = SELECT only).
+Due to an Elastic Workflows execution engine bug (confirmed in Hippocampus),
+write functionality is implemented via this MCP server.
 
-추가로 Cloud Scheduler에서 호출하는 자동화 도구도 제공:
-- ti_daily_discovery: 에이전트 탐색 트리거 (Converse API)
-- ti_gap_watch: open Gap 영역의 최근 논문 모니터링 (ES 직접 쿼리)
+Also provides automation tools invoked by Cloud Scheduler:
+- ti_daily_discovery: triggers agent exploration (Converse API)
+- ti_gap_watch: monitors recent papers in open Gap domains (direct ES query)
 
-인증:
-- CLOUD_RUN_URL 환경변수 설정 시 → Google OIDC ID Token 검증 (Cloud Scheduler 호출)
-- 미설정 시 → 인증 스킵 (Kibana .mcp 커넥터 호출)
+Authentication:
+- If CLOUD_RUN_URL env var is set → Google OIDC ID Token verification (Cloud Scheduler calls)
+- If not set → authentication skipped (Kibana .mcp connector calls)
 """
 
 import asyncio
@@ -28,20 +28,20 @@ logger = logging.getLogger("terra-incognita-mcp")
 ES_URL = os.environ["ES_URL"]
 ES_API_KEY = os.environ["ES_API_KEY"]
 
-# Cloud Scheduler 자동화에 필요한 환경변수 (선택)
+# Optional env vars for Cloud Scheduler automation
 KIBANA_URL = os.environ.get("KIBANA_URL", "")
 CLOUD_RUN_URL = os.environ.get("CLOUD_RUN_URL", "")
 
 mcp = FastMCP(
     name="terra-incognita-writer",
-    instructions="Terra Incognita 탐색 결과 저장 + 자동화 서버. Gap, Bridge, Discovery Card, Exploration Log를 ES에 기록하고, Cloud Scheduler에서 매일 탐색/모니터링을 트리거합니다.",
+    instructions="Terra Incognita result storage + automation server. Records Gaps, Bridges, Discovery Cards, and Exploration Logs to ES, and triggers daily exploration/monitoring via Cloud Scheduler.",
     host="0.0.0.0",
     port=int(os.getenv("PORT", "8080")),
     stateless_http=True,
     json_response=True,
 )
 
-# result_type → ES 인덱스 매핑
+# result_type → ES index mapping
 INDEX_MAP = {
     "gap": "ti-gaps",
     "bridge": "ti-bridges",
@@ -49,7 +49,7 @@ INDEX_MAP = {
     "exploration_log": "ti-exploration-log",
 }
 
-# 각 타입별 타임스탬프 필드 이름
+# Timestamp field name per result type
 TIMESTAMP_FIELD = {
     "gap": "detected_at",
     "bridge": "created_at",
@@ -57,7 +57,7 @@ TIMESTAMP_FIELD = {
     "exploration_log": "timestamp",
 }
 
-# arXiv 도메인 매핑 (ti_ingest_new 용)
+# arXiv domain mapping (for ti_ingest_new)
 ARXIV_DOMAINS = {
     "neuroscience": "cat:q-bio.NC",
     "machine_learning": "cat:cs.LG",
@@ -65,8 +65,14 @@ ARXIV_DOMAINS = {
     "quantum_computing": "cat:quant-ph",
     "ecology": "cat:q-bio.PE",
     "robotics": "cat:cs.RO",
+    "bioinformatics": "cat:q-bio.QM",
+    "energy_systems": "cat:physics.app-ph",
+    "astrophysics": "cat:astro-ph",
+    "social_networks": "cat:cs.SI",
+    "neural_computing": "cat:cs.NE",
+    "artificial_intelligence": "cat:cs.AI",
 }
-INGEST_PER_DOMAIN = 10  # 도메인당 최근 10편, 총 ~60편/일
+INGEST_PER_DOMAIN = 10  # Latest 10 papers per domain, ~60 total/day
 
 
 _es_client: httpx.AsyncClient | None = None
@@ -89,7 +95,7 @@ _MAX_RETRIES = 3
 
 
 async def _get_es_client() -> httpx.AsyncClient:
-    """싱글톤 AsyncClient — TCP 연결 재사용."""
+    """Singleton AsyncClient — reuses TCP connections."""
     global _es_client
     if _es_client is None or _es_client.is_closed:
         async with _es_lock:
@@ -99,7 +105,7 @@ async def _get_es_client() -> httpx.AsyncClient:
 
 
 async def _reset_es_client() -> None:
-    """연결 장애 시 클라이언트 재생성."""
+    """Recreate client on connection failure."""
     global _es_client
     async with _es_lock:
         if _es_client is not None:
@@ -108,7 +114,7 @@ async def _reset_es_client() -> None:
 
 
 async def _index_document(index: str, document: dict) -> dict:
-    """ES REST API로 문서 인덱싱 (exponential backoff 재시도)."""
+    """Index a document via ES REST API (with exponential backoff retry)."""
     last_exc: Exception | None = None
     for attempt in range(_MAX_RETRIES):
         client = await _get_es_client()
@@ -139,7 +145,7 @@ async def _index_document(index: str, document: dict) -> dict:
 
 
 async def _search_es(index: str, body: dict, timeout: float = 30) -> dict:
-    """ES REST API로 검색 (exponential backoff 재시도)."""
+    """Search via ES REST API (with exponential backoff retry)."""
     last_exc: Exception | None = None
     for attempt in range(_MAX_RETRIES):
         client = await _get_es_client()
@@ -171,7 +177,7 @@ async def _search_es(index: str, body: dict, timeout: float = 30) -> dict:
 
 
 async def _update_document(index: str, doc_id: str, fields: dict) -> dict:
-    """ES REST API로 문서 부분 업데이트 (exponential backoff)."""
+    """Partial document update via ES REST API (with exponential backoff)."""
     last_exc: Exception | None = None
     for attempt in range(_MAX_RETRIES):
         client = await _get_es_client()
@@ -201,7 +207,7 @@ async def _update_document(index: str, doc_id: str, fields: dict) -> dict:
     raise last_exc  # type: ignore[misc]
 
 
-# ─── Tool 1: ti_save_results (기존) ─────────────────────────────
+# ─── Tool 1: ti_save_results ─────────────────────────────────────
 
 
 @mcp.tool()
@@ -209,20 +215,20 @@ async def ti_save_results(
     result_type: str,
     data: str,
 ) -> str:
-    """탐색 결과를 Elasticsearch에 저장합니다.
+    """Save exploration results to Elasticsearch.
 
-    5단계 워크플로우(SURVEY->DETECT->BRIDGE->VALIDATE->PROPOSE)의 결과를
-    4개 인덱스에 저장합니다.
+    Stores the output of the 5-step workflow (SURVEY->DETECT->BRIDGE->VALIDATE->PROPOSE)
+    across 4 indices.
 
     Args:
-        result_type: 저장할 결과 타입. "gap" | "bridge" | "discovery_card" | "exploration_log"
-        data: JSON 문자열. 각 타입별 필드를 포함해야 합니다.
-              - gap: query_text, source_domain, gap_domain, innovation_vacuum_index, status 등
-              - bridge: gap_id, bridge_text, source_domain, target_domain, serendipity_probability 등
-              - discovery_card: gap_id, hypothesis_title, gap_summary, innovation_vacuum_index, confidence 등
-              - exploration_log: conversation_id, action, query, gaps_found, bridges_found 등
+        result_type: Type of result to save. "gap" | "bridge" | "discovery_card" | "exploration_log"
+        data: JSON string. Must include the fields for each type:
+              - gap: query_text, source_domain, gap_domain, innovation_vacuum_index, status, etc.
+              - bridge: gap_id, bridge_text, source_domain, target_domain, serendipity_probability, etc.
+              - discovery_card: gap_id, hypothesis_title, gap_summary, innovation_vacuum_index, confidence, etc.
+              - exploration_log: conversation_id, action, query, gaps_found, bridges_found, etc.
     """
-    # 1) result_type 검증
+    # 1) Validate result_type
     index = INDEX_MAP.get(result_type)
     if not index:
         valid = ", ".join(INDEX_MAP.keys())
@@ -231,7 +237,7 @@ async def ti_save_results(
             ensure_ascii=False,
         )
 
-    # 2) data JSON 파싱
+    # 2) Parse data JSON
     try:
         document = json.loads(data)
     except json.JSONDecodeError as e:
@@ -240,12 +246,12 @@ async def ti_save_results(
             ensure_ascii=False,
         )
 
-    # 3) 타임스탬프 자동 추가 (없으면)
+    # 3) Auto-add timestamp if missing
     ts_field = TIMESTAMP_FIELD[result_type]
     if ts_field not in document:
         document[ts_field] = datetime.now(timezone.utc).isoformat()
 
-    # 4) ES에 인덱싱
+    # 4) Index to ES
     try:
         result = await _index_document(index, document)
         return json.dumps(
@@ -276,22 +282,22 @@ async def ti_save_results(
         )
 
 
-# ─── Tool 2: ti_daily_discovery (Cloud Scheduler) ───────────────
+# ─── Tool 2: ti_daily_discovery (Cloud Scheduler) ────────────────
 
 
 @mcp.tool()
 async def ti_daily_discovery() -> str:
-    """Cloud Scheduler에서 매일 호출. Converse API로 에이전트 탐색을 트리거합니다.
+    """Called daily by Cloud Scheduler. Triggers agent exploration via Converse API.
 
-    5단계 워크플로우를 자동 실행하여 새로운 연구 공백을 탐색하고
-    Discovery Card를 생성합니다. 결과는 자동 저장됩니다.
+    Automatically runs the 5-step workflow to discover new research gaps
+    and generate Discovery Cards. Results are saved automatically.
     """
     if not KIBANA_URL:
         return json.dumps({"status": "error", "message": "KIBANA_URL not configured"})
 
     try:
         async with httpx.AsyncClient(timeout=180.0) as client:
-            # Step 1: 에이전트 탐색 트리거
+            # Step 1: Trigger agent exploration
             logger.info("Daily Discovery: triggering agent exploration")
             resp = await client.post(
                 f"{KIBANA_URL}/api/agent_builder/converse",
@@ -299,8 +305,8 @@ async def ti_daily_discovery() -> str:
                 json={
                     "agent_id": "terra-incognita",
                     "input": (
-                        "전체 도메인에서 새로운 연구 공백을 탐색해줘. "
-                        "교차 밀도가 낮은 도메인 페어를 찾고 Discovery Card를 생성해줘."
+                        "Explore new research gaps across all domains. "
+                        "Find domain pairs with low cross-density and generate a Discovery Card."
                     ),
                 },
             )
@@ -309,7 +315,7 @@ async def ti_daily_discovery() -> str:
             conv_id = result.get("conversation_id")
             logger.info("Daily Discovery: exploration done, conversation_id=%s", conv_id)
 
-            # Step 2: 결과 저장 (같은 conversation)
+            # Step 2: Save results (same conversation)
             if conv_id:
                 logger.info("Daily Discovery: requesting save")
                 save_resp = await client.post(
@@ -318,7 +324,7 @@ async def ti_daily_discovery() -> str:
                     json={
                         "agent_id": "terra-incognita",
                         "conversation_id": conv_id,
-                        "input": "결과를 저장해줘",
+                        "input": "Save the results",
                     },
                 )
                 save_resp.raise_for_status()
@@ -338,11 +344,11 @@ async def ti_daily_discovery() -> str:
         return json.dumps({"status": "error", "message": str(e)})
 
 
-# ─── Tool 3: ti_ingest_new (Cloud Scheduler) ────────────────────
+# ─── Tool 3: ti_ingest_new (Cloud Scheduler) ─────────────────────
 
 
 def _collect_recent_papers(max_per_domain: int = INGEST_PER_DOMAIN) -> list[dict]:
-    """동기 함수 — asyncio.to_thread()로 호출. arxiv 라이브러리가 동기."""
+    """Synchronous function — called via asyncio.to_thread(). The arxiv library is sync."""
     import arxiv
 
     papers: list[dict] = []
@@ -378,17 +384,17 @@ def _collect_recent_papers(max_per_domain: int = INGEST_PER_DOMAIN) -> list[dict
 
 @mcp.tool()
 async def ti_ingest_new() -> str:
-    """Cloud Scheduler에서 매일 호출. arXiv에서 최신 논문을 수집하여 ES에 인덱싱합니다.
+    """Called daily by Cloud Scheduler. Collects latest papers from arXiv and indexes them in ES.
 
-    6개 도메인에서 각 10편씩 최신 논문을 수집하고 ti-papers 인덱스에
-    bulk 인덱싱합니다. ELSER 임베딩 처리 후 daily_discovery에서 활용됩니다.
+    Collects up to 10 latest papers per domain across 12 domains and bulk-indexes
+    them into the ti-papers index. After ELSER embedding, they are used by daily_discovery.
     """
     try:
         papers = await asyncio.to_thread(_collect_recent_papers, INGEST_PER_DOMAIN)
         if not papers:
             return json.dumps({"status": "ok", "indexed": 0, "message": "No new papers"})
 
-        # _bulk API로 인덱싱
+        # Bulk index via _bulk API
         lines: list[str] = []
         for doc in papers:
             lines.append(json.dumps({"index": {"_index": "ti-papers", "_id": doc["arxiv_id"]}}))
@@ -407,7 +413,7 @@ async def ti_ingest_new() -> str:
         errors = sum(1 for item in result.get("items", []) if item.get("index", {}).get("error"))
         indexed = len(papers) - errors
 
-        # exploration-log에 인제스트 기록
+        # Record ingest in exploration-log
         await _index_document("ti-exploration-log", {
             "action": "ingest",
             "query": "automated arXiv ingest",
@@ -431,19 +437,19 @@ async def ti_ingest_new() -> str:
         return json.dumps({"status": "error", "message": str(e)})
 
 
-# ─── Tool 4: ti_gap_watch (Cloud Scheduler) ─────────────────────
+# ─── Tool 4: ti_gap_watch (Cloud Scheduler) ──────────────────────
 
 
 @mcp.tool()
 async def ti_gap_watch() -> str:
-    """Cloud Scheduler에서 매일 호출. open Gap 영역의 최근 논문을 확인합니다.
+    """Called daily by Cloud Scheduler. Checks recent papers in open Gap domains.
 
-    에이전트 LLM 추론 없이 ES 직접 쿼리로 동작합니다.
-    open 상태의 Gap을 조회하고, 각 Gap 도메인에서 최근 7일 논문을 검색하여
-    새 논문이 발견되면 Alert를 생성합니다.
+    Operates via direct ES queries without agent LLM inference.
+    Retrieves open Gaps and searches for papers from the last 7 days in each Gap domain.
+    Generates alerts when new papers are found.
     """
     try:
-        # Step 1: open Gap 조회 (IVI 내림차순, 상위 10개)
+        # Step 1: Query open Gaps (IVI descending, top 10)
         gaps_result = await _search_es("ti-gaps", {
             "query": {"term": {"status": "open"}},
             "sort": [{"innovation_vacuum_index": "desc"}],
@@ -461,7 +467,7 @@ async def ti_gap_watch() -> str:
             if not gap_concept or not gap_domain:
                 continue
 
-            # Step 2: 각 Gap 도메인에서 최근 7일 논문 검색
+            # Step 2: Search for papers from the last 7 days in each Gap domain
             papers_result = await _search_es("ti-papers", {
                 "query": {
                     "bool": {
@@ -488,7 +494,7 @@ async def ti_gap_watch() -> str:
                     "new_papers": [p["_source"].get("title", "untitled") for p in new_papers[:3]],
                 })
 
-                # Gap 상태 자동 업데이트: open → filling
+                # Auto-update Gap status: open → filling
                 try:
                     await _update_document("ti-gaps", gap["_id"], {
                         "status": "filling",
@@ -499,7 +505,7 @@ async def ti_gap_watch() -> str:
                 except Exception as e:
                     logger.warning("Gap status update failed for %s: %s", gap["_id"], e)
 
-        # Step 3: 결과를 exploration-log에 기록
+        # Step 3: Record results in exploration-log
         log_doc = {
             "action": "gap_watch",
             "query": "automated gap watch",
@@ -509,7 +515,7 @@ async def ti_gap_watch() -> str:
         }
         await _index_document("ti-exploration-log", log_doc)
 
-        message = f"{len(alerts)}개 Gap에서 새 논문 감지" if alerts else "변화 없음"
+        message = f"New papers detected in {len(alerts)} gap(s)" if alerts else "No changes detected"
         logger.info("Gap Watch: %s", message)
 
         return json.dumps({

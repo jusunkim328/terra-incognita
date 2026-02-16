@@ -2,21 +2,21 @@
 # ──────────────────────────────────────────────────────────────────
 # 09-scheduler.sh
 #
-# Cloud Scheduler 설정 — MCP 서버의 자동화 도구를 매일 트리거
+# Cloud Scheduler setup — triggers MCP server automation tools daily
 #
-# Job 1: ti-ingest-new (매일 08:00 KST)
-#   → MCP 서버 JSON-RPC → ti_ingest_new → arXiv 최신 논문 수집
+# Job 1: ti-ingest-new (daily 08:00 KST)
+#   → MCP server JSON-RPC → ti_ingest_new → collect latest arXiv papers
 #
-# Job 2: ti-daily-discovery (매일 09:00 KST)
-#   → MCP 서버 JSON-RPC → ti_daily_discovery → Converse API 탐색
+# Job 2: ti-daily-discovery (daily 09:00 KST)
+#   → MCP server JSON-RPC → ti_daily_discovery → Converse API exploration
 #
-# Job 3: ti-gap-watch (매일 10:00 KST — Discovery 1시간 후)
-#   → MCP 서버 JSON-RPC → ti_gap_watch → ES 직접 쿼리
+# Job 3: ti-gap-watch (daily 10:00 KST — 1 hour after Discovery)
+#   → MCP server JSON-RPC → ti_gap_watch → direct ES query
 #
-# 사전 요구사항:
-#   - MCP 서버가 Cloud Run에 배포되어 있어야 함
-#   - .env에 MCP_SERVER_URL 설정 필요
-#   - gcloud CLI 인증 완료
+# Prerequisites:
+#   - MCP server must be deployed on Cloud Run
+#   - MCP_SERVER_URL must be set in .env
+#   - gcloud CLI must be authenticated
 # ──────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -39,7 +39,7 @@ echo "Project:    ${PROJECT_ID}"
 echo "Region:     ${REGION}"
 echo ""
 
-# ─── Step 1: 서비스 계정 생성 ───
+# ─── Step 1: Create service account ───
 echo -n "Creating service account (${SA_NAME}) ... "
 if gcloud iam service-accounts describe "${SA_EMAIL}" --project="${PROJECT_ID}" &>/dev/null; then
   echo "ALREADY EXISTS"
@@ -50,7 +50,7 @@ else
   echo "OK"
 fi
 
-# ─── Step 2: Cloud Run invoker 권한 부여 ───
+# ─── Step 2: Grant Cloud Run invoker role ───
 echo -n "Granting Cloud Run invoker role ... "
 gcloud run services add-iam-policy-binding "${CLOUD_RUN_SERVICE}" \
   --member="serviceAccount:${SA_EMAIL}" \
@@ -60,7 +60,7 @@ gcloud run services add-iam-policy-binding "${CLOUD_RUN_SERVICE}" \
   --quiet 2>/dev/null
 echo "OK"
 
-# ─── Step 3: Job 1 — arXiv Ingest (매일 08:00 KST — Discovery 1시간 전) ───
+# ─── Step 3: Job 1 — arXiv Ingest (daily 08:00 KST — 1 hour before Discovery) ───
 echo -n "Creating scheduler job: ti-ingest-new ... "
 gcloud scheduler jobs delete ti-ingest-new \
   --location="${REGION}" --project="${PROJECT_ID}" --quiet 2>/dev/null || true
@@ -80,9 +80,9 @@ gcloud scheduler jobs create http ti-ingest-new \
   --quiet
 echo "OK"
 
-# ─── Step 4: Job 2 — Daily Discovery (매일 09:00 KST) ───
+# ─── Step 4: Job 2 — Daily Discovery (daily 09:00 KST) ───
 echo -n "Creating scheduler job: ti-daily-discovery ... "
-# 기존 job 삭제 (있으면)
+# Delete existing job (if any)
 gcloud scheduler jobs delete ti-daily-discovery \
   --location="${REGION}" --project="${PROJECT_ID}" --quiet 2>/dev/null || true
 
@@ -101,9 +101,9 @@ gcloud scheduler jobs create http ti-daily-discovery \
   --quiet
 echo "OK"
 
-# ─── Step 5: Job 3 — Gap Watch (매일 10:00 KST) ───
+# ─── Step 5: Job 3 — Gap Watch (daily 10:00 KST) ───
 echo -n "Creating scheduler job: ti-gap-watch ... "
-# 기존 job 삭제 (있으면)
+# Delete existing job (if any)
 gcloud scheduler jobs delete ti-gap-watch \
   --location="${REGION}" --project="${PROJECT_ID}" --quiet 2>/dev/null || true
 
@@ -124,14 +124,14 @@ echo "OK"
 
 echo ""
 echo "Done! Cloud Scheduler jobs created:"
-echo "  1. ti-ingest-new      — 매일 08:00 KST → ti_ingest_new"
-echo "  2. ti-daily-discovery — 매일 09:00 KST → ti_daily_discovery"
-echo "  3. ti-gap-watch       — 매일 10:00 KST → ti_gap_watch"
+echo "  1. ti-ingest-new      — daily 08:00 KST → ti_ingest_new"
+echo "  2. ti-daily-discovery — daily 09:00 KST → ti_daily_discovery"
+echo "  3. ti-gap-watch       — daily 10:00 KST → ti_gap_watch"
 echo ""
-echo "수동 트리거:"
+echo "Manual trigger:"
 echo "  gcloud scheduler jobs run ti-ingest-new --location=${REGION}"
 echo "  gcloud scheduler jobs run ti-daily-discovery --location=${REGION}"
 echo "  gcloud scheduler jobs run ti-gap-watch --location=${REGION}"
 echo ""
-echo "로그 확인:"
+echo "View logs:"
 echo "  gcloud run logs read ${CLOUD_RUN_SERVICE} --region=${REGION} --limit=50"

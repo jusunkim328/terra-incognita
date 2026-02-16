@@ -2,15 +2,15 @@
 # ──────────────────────────────────────────────────────────────────
 # 08-mcp-save.sh
 #
-# ti-save-results 도구를 MCP 기반으로 등록합니다.
+# Registers ti-save-results tool as MCP-based.
 #
-# 배경: Agent Builder의 esql 도구는 읽기 전용 (ES|QL = SELECT only).
-#       Elastic Workflows 실행 엔진 버그 (Hippocampus에서 확인).
-#       MCP 서버로 4개 인덱스에 쓰기 기능을 구현.
+# Background: Agent Builder's esql tools are read-only (ES|QL = SELECT only).
+#             Elastic Workflows execution engine bug (confirmed in Hippocampus).
+#             MCP server implements write functionality for 4 indices.
 #
-# 사전 요구사항:
-#   - MCP 서버가 배포되어 HTTPS URL로 접근 가능해야 함
-#   - .env에 MCP_SERVER_URL 설정 필요
+# Prerequisites:
+#   - MCP server must be deployed and accessible via HTTPS URL
+#   - MCP_SERVER_URL must be set in .env
 # ──────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -32,7 +32,7 @@ echo "Kibana:     ${KIBANA_URL}"
 echo "MCP Server: ${MCP_SERVER_URL}"
 echo ""
 
-# ─── Step 1: 기존 도구 삭제 (있으면) ───
+# ─── Step 1: Remove old tool (if exists) ───
 echo -n "Removing old save tool (if exists) ... "
 old_http=$(curl -s -o /dev/null -w "%{http_code}" \
   -X DELETE "${KIBANA_URL}/api/agent_builder/tools/ti-save-results" \
@@ -48,7 +48,7 @@ else
   echo "HTTP $old_http (continuing)"
 fi
 
-# ─── Step 2: .mcp 커넥터 생성 (idempotent) ───
+# ─── Step 2: Create .mcp connector (idempotent) ───
 echo -n "Creating MCP connector ... "
 
 CONNECTOR_JSON=$(cat <<EOF
@@ -76,7 +76,7 @@ if [ "$CONNECTOR_HTTP" -ge 200 ] && [ "$CONNECTOR_HTTP" -lt 300 ]; then
   CONNECTOR_ID=$(echo "$CONNECTOR_BODY" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
   echo "OK (id: ${CONNECTOR_ID})"
 elif [ "$CONNECTOR_HTTP" -eq 409 ]; then
-  # 이미 존재 — 기존 커넥터 조회
+  # Already exists — find existing connector
   echo "ALREADY EXISTS — finding existing..."
   CONNECTOR_ID=$(curl -s "${KIBANA_URL}/api/actions/connectors" \
     -H "Authorization: ApiKey ${ES_API_KEY}" \
@@ -97,14 +97,14 @@ else
   exit 1
 fi
 
-# ─── Step 3: MCP 기반 save 도구 등록 ───
+# ─── Step 3: Register MCP-based save tool ───
 echo -n "Registering ti-save-results (MCP) ... "
 
 TOOL_JSON=$(cat <<EOF
 {
   "id": "ti-save-results",
   "type": "mcp",
-  "description": "탐색 결과를 Elasticsearch에 저장합니다. result_type: gap | bridge | discovery_card | exploration_log. data: 각 타입별 필드를 포함한 JSON 문자열. 사용자가 저장을 요청할 때 사용합니다.",
+  "description": "Saves exploration results to Elasticsearch. result_type: gap | bridge | discovery_card | exploration_log. data: JSON string with type-specific fields. Used when the user requests to save results.",
   "tags": ["terra-incognita", "save"],
   "configuration": {
     "connector_id": "${CONNECTOR_ID}",
