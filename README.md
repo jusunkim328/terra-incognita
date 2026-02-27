@@ -8,7 +8,7 @@
 
 > **Existing tools search for papers that exist. Terra Incognita discovers research that doesn't exist yet.**
 
-Every research tool — Semantic Scholar, Connected Papers, Elicit — answers the same question: *"What papers exist?"* But breakthroughs live in the spaces **between** papers. Penicillin = bacteriology + mycology gap. CRISPR = gene editing + bacterial immunology gap. Terra Incognita is an autonomous agent that finds these gaps and bridges them across disciplines.
+Every research tool (Semantic Scholar, Connected Papers, Elicit) answers the same question: *"What papers exist?"* But breakthroughs live in the spaces **between** papers. Penicillin followed from a bacteriologist noticing a fungal contaminant. CRISPR repurposed a bacterial immune mechanism for gene editing. Terra Incognita is an autonomous agent that finds these gaps and bridges them across disciplines.
 
 ![Discovery Card — autonomous gap detection with quantitative scoring](assets/discovery-card-top.jpeg)
 
@@ -16,13 +16,13 @@ Every research tool — Semantic Scholar, Connected Papers, Elicit — answers t
 
 ## The Solution: 5-Step Autonomous Discovery
 
-Terra Incognita maps 17,000+ scientific papers across 12 domains, detects "meaningful voids" where research *should* exist but doesn't, and proposes cross-disciplinary bridges — each backed by a dedicated ES|QL tool.
+Terra Incognita maps 17,000+ scientific papers across 12 domains, detects "meaningful voids" where research *should* exist but doesn't, and proposes cross-disciplinary bridges, each backed by a dedicated ES|QL tool.
 
 ```mermaid
 graph TD
-    Q["User Query"] --> S["1. SURVEY<br/>ELSER v2 + RRF<br/>12-domain profiling"]
+    Q["User Query"] --> S["1. SURVEY<br/>ELSER semantic search<br/>12-domain profiling"]
     S --> D["2. DETECT<br/>ES|QL density analysis<br/>Gap identification"]
-    D --> B["3. BRIDGE<br/>RRF cross-domain search<br/>+ Self-Correction"]
+    D --> B["3. BRIDGE<br/>Cross-domain semantic search<br/>+ Self-Correction"]
     B --> V["4. VALIDATE<br/>ES|QL cross-list count<br/>Novelty verification"]
     V --> P["5. PROPOSE<br/>Hypothesis generation<br/>+ Discovery Card"]
 
@@ -52,9 +52,9 @@ Every finding is packaged as a shareable Discovery Card with quantitative scores
 
 ### Quantitative Scoring
 
-Two metrics make the abstract concept of "research gap" concrete and comparable:
+Two metrics turn "research gap" into a measurable number:
 
-**Innovation Vacuum Index** — How "meaningfully empty" a gap is:
+**Innovation Vacuum Index**: How "meaningfully empty" a gap is:
 
 ```
 IVI = (relevance x 0.3) + (void x 0.5) + (density/100 x 0.2)
@@ -66,15 +66,15 @@ IVI = (relevance x 0.3) + (void x 0.5) + (density/100 x 0.2)
 | **Void** | Absence of cross-domain papers | `1 - (cross / total)` |
 | **Density** | Surrounding research activity | `COUNT(*)` in adjacent domains |
 
-A high IVI means the gap is surrounded by active research but the intersection itself is unexplored — the most promising kind of gap.
+A high IVI means the gap is surrounded by active research but the intersection itself is unexplored. This is the most promising kind of gap.
 
-**Serendipity Probability** — How promising a cross-domain bridge is:
+**Serendipity Probability**: How promising a cross-domain bridge is:
 
 ```
 SP = (similarity x 0.3) + (novelty x 0.4) + (evidence/50 x 0.3)
 ```
 
-Both scores are displayed as **percentiles** (e.g., "top 2%") for intuitive interpretation, and all components are exposed individually for **explainability** — the analysis engine is Elasticsearch, not a black-box LLM.
+Both scores are displayed as **percentiles** (e.g., "top 2%") for intuitive interpretation, and all components are exposed individually for **explainability**. Every score component traces back to an ES query result, not opaque LLM reasoning.
 
 ---
 
@@ -84,7 +84,7 @@ Both scores are displayed as **percentiles** (e.g., "top 2%") for intuitive inte
 
 During the BRIDGE step, the agent evaluates and discards false-positive bridge candidates:
 
-1. Discovers N bridge candidates via RRF hybrid search
+1. Discovers N bridge candidates via ELSER semantic search
 2. Evaluates each candidate's **mechanistic relevance** (not just keyword overlap)
 3. Discards surface-level matches: *"This connection is keyword-only — no mechanistic similarity. Discarded."*
 4. Re-searches with alternative concepts (up to 3 retries)
@@ -100,7 +100,7 @@ The agent adjusts DETECT parameters based on SURVEY results:
 
 ### Thought Log
 
-Every decision is exposed — ES|QL queries executed, index selection reasoning, self-correction judgments, parameter adjustment rationale. No black box.
+Every decision is exposed: ES|QL queries executed, index selection reasoning, self-correction judgments, parameter adjustment rationale. No black box.
 
 ---
 
@@ -117,7 +117,7 @@ A 3-minute, 4-act demonstration of autonomous research gap discovery:
 
 **Demo Query**: *"Find unexplored research directions in Alzheimer's treatment"*
 
-**The Wow Moment**: Zwitterionic anti-fouling polymers (materials science) share the same protein-adhesion-prevention mechanism as amyloid-beta aggregation inhibition (neuroscience) — with **zero** existing cross-papers. Two mature fields, completely unexplored intersection, found autonomously.
+**The Wow Moment**: Zwitterionic anti-fouling polymers (materials science) share a protein-adhesion-prevention mechanism with amyloid-beta aggregation inhibition (neuroscience), with **zero** cross-papers in our corpus. Two active fields, an intersection the agent surfaced on its own.
 
 ---
 
@@ -125,11 +125,11 @@ A 3-minute, 4-act demonstration of autonomous research gap discovery:
 
 ![Reasoning process — multi-step tool orchestration with ES|QL queries](assets/reasoning-process.jpeg)
 
-### Agent Builder — 9-Rule Autonomous Reasoning
+### Agent Builder: 9-Rule Autonomous Reasoning
 
-A single agent with 7 tools (4 ES|QL + 1 MCP + 2 platform built-in) orchestrated by **pure instruction engineering** — 9 RULE-based instructions with STEP numbering enforce the 5-step workflow, Self-Correction protocol, parameter auto-tuning, and Discovery Card generation. The agent also exposes the **Converse API** for programmatic access.
+A single agent with 7 tools (4 ES|QL + 1 MCP + 2 platform built-in) orchestrated by **pure instruction engineering**: 9 RULE-based instructions with STEP numbering enforce the 5-step workflow, Self-Correction protocol, parameter auto-tuning, and Discovery Card generation. The agent also exposes the **Converse API** for programmatic access.
 
-### ES|QL — Cross-Domain Analytics Pipeline
+### ES|QL: Cross-Domain Analytics Pipeline
 
 Four parameterized ES|QL tools power the analytical backbone:
 
@@ -141,21 +141,21 @@ FROM ti-papers | WHERE MATCH(content, ?query) | STATS paper_count = COUNT(*), av
 FROM ti-papers | WHERE primary_category IN (?category_a, ?category_b) | STATS paper_count = COUNT(*) BY primary_category
 ```
 
-Each tool is registered in Agent Builder as a standalone step — full traceability from query to conclusion.
+Each tool is registered in Agent Builder as a standalone step. Full traceability from query to conclusion.
 
-### ELSER v2 — Zero-Pipeline Semantic Embeddings
+### ELSER v2: Zero-Pipeline Semantic Embeddings
 
-The `semantic_text` field type handles tokenization, inference, and vector storage automatically. No external embedding service, no indexing pipeline — just a field declaration and 17,000+ papers become semantically searchable.
+The `semantic_text` field type handles tokenization, inference, and vector storage automatically. No external embedding service, no indexing pipeline. Just a field declaration and 17,000+ papers become semantically searchable.
 
-### RRF Hybrid Search — The Technical Implementation of Serendipity
+### ELSER Semantic Search: Cross-Domain Discovery
 
-RRF fuses BM25 keyword scores with vector similarity scores. This is critical for bridge discovery: a paper might not share keywords with the query domain but has high vector similarity — exactly the kind of "unexpected connection" that cross-disciplinary bridges require.
+All tools query the `semantic_text` field via ELSER v2 sparse vector retrieval. Unlike BM25 keyword matching, ELSER captures semantic meaning, so a paper about "protein adhesion prevention" can match a query about "amyloid-beta aggregation" even without shared keywords. This is what makes cross-disciplinary bridge discovery possible.
 
-### Index Aliases — Time-Travel Backtesting
+### Index Aliases: Time-Travel Backtesting
 
-Two aliases enable backtesting: `ti-papers_before_2020` (pre-2020 data for discovery) and `ti-papers_all` (full corpus for validation). The framing: *"Using only data available at the time, the agent detected cross-domain signals — and subsequent papers confirmed the connection."*
+Two aliases enable backtesting: `ti-papers_before_2020` (pre-2020 data for discovery) and `ti-papers_all` (full corpus for validation). The framing: *"Using only data available at the time, the agent detected cross-domain signals, and subsequent papers confirmed the connection."*
 
-### Cloud Scheduler + MCP — Automated Discovery Pipeline
+### Cloud Scheduler + MCP: Automated Discovery Pipeline
 
 ```mermaid
 graph LR
@@ -179,7 +179,7 @@ Agent Builder's ES|QL tools are read-only. The MCP server (FastMCP on Cloud Run)
 | Gap Watch | 10:00 KST | Monitor open gaps for new papers |
 | Ingest New | 08:00 KST | Collect latest arXiv papers |
 
-### Kibana Dashboard — Discovery Visualization
+### Kibana Dashboard: Discovery Visualization
 
 6 Lens panels: Research Landscape (t-SNE scatter), Innovation Vacuum Index Top 10, Cross-Paper Count, Serendipity Probability Ranking, Domain x Gap Heatmap, Discovery Timeline.
 
@@ -200,7 +200,7 @@ Agent Builder's ES|QL tools are read-only. The MCP server (FastMCP on Cloud Run)
 | **Automated gap monitoring** | — | — | — | **Yes** |
 | **Shareable Discovery Card** | — | — | — | **Yes** |
 
-**Core insight**: Existing tools optimize for recall ("find all relevant papers"). Terra Incognita optimizes for **discovery** ("find what nobody has explored yet").
+**Key difference**: Existing tools optimize for recall ("find all relevant papers"). Terra Incognita optimizes for **discovery** ("find what nobody has explored yet").
 
 ---
 
@@ -208,17 +208,17 @@ Agent Builder's ES|QL tools are read-only. The MCP server (FastMCP on Cloud Run)
 
 ### Agent
 
-**Terra Incognita Scout** — An autonomous research gap detection agent with 9 rules: 5-step workflow, Self-Correction protocol, quantitative scoring, parameter auto-tuning, Discovery Card format, backtest mode, save protocol, personalization, and Gap Watch mode.
+**Terra Incognita Scout**: An autonomous research gap detection agent with 9 rules: 5-step workflow, Self-Correction protocol, quantitative scoring, parameter auto-tuning, Discovery Card format, backtest mode, save protocol, personalization, and Gap Watch mode.
 
 ### Tools (5 custom + 2 platform)
 
 | Tool | Type | Workflow Step |
 |------|------|---------------|
-| `ti-survey` | ES\|QL | STEP 1 — Per-domain relevance profiling |
-| `ti-detect` | ES\|QL | STEP 2 — Gap detection + density analysis |
-| `ti-bridge` | ES\|QL | STEP 3 — Cross-domain bridge discovery via RRF |
-| `ti-validate` | ES\|QL | STEP 4 — Novelty verification via cross-category count |
-| `ti-save-results` | MCP | Result storage — writes to 4 indices via MCP server |
+| `ti-survey` | ES\|QL | STEP 1: Per-domain relevance profiling |
+| `ti-detect` | ES\|QL | STEP 2: Gap detection + density analysis |
+| `ti-bridge` | ES\|QL | STEP 3: Cross-domain bridge discovery via ELSER |
+| `ti-validate` | ES\|QL | STEP 4: Novelty verification via cross-category count |
+| `ti-save-results` | MCP | Result storage: writes to 4 indices via MCP server |
 | `platform.core.execute_esql` | Built-in | Ad-hoc ES\|QL queries (backtest mode) |
 | `platform.core.search` | Built-in | Index search for validation |
 
@@ -226,12 +226,12 @@ Agent Builder's ES|QL tools are read-only. The MCP server (FastMCP on Cloud Run)
 
 FastMCP server on Cloud Run providing write capability and automation:
 
-- `ti_save_results` — Result storage dispatching to 4 indices
-- `ti_daily_discovery` — Automated exploration via Converse API
-- `ti_gap_watch` — Automated gap monitoring via ES direct query
-- `ti_ingest_new` — arXiv paper collection + ES indexing
+- `ti_save_results`: Result storage dispatching to 4 indices
+- `ti_daily_discovery`: Automated exploration via Converse API
+- `ti_gap_watch`: Automated gap monitoring via ES direct query
+- `ti_ingest_new`: arXiv paper collection + ES indexing
 
-> **Why MCP instead of Elastic Workflows?** Elastic Workflows (Technical Preview, ES 9.x) have an execution engine bug — registration succeeds but execution fails. All write functionality has been migrated to MCP tools.
+> **Why MCP instead of Elastic Workflows?** Elastic Workflows (Technical Preview, ES 9.x) have an execution engine bug: registration succeeds but execution fails. All write functionality has been migrated to MCP tools.
 
 ### Elasticsearch Indices (5)
 
@@ -278,7 +278,7 @@ bash setup/07-dashboard.sh    # Dashboard import
 bash setup/09-scheduler.sh
 ```
 
-> Scripts 01-02, 05-06 target `ES_URL`. Scripts 03-04, 07-08 target `KIBANA_URL`. Both use `ES_API_KEY` for auth. All seed data is **synthetic** — no real or confidential data is used.
+> Scripts 01-02, 05-06 target `ES_URL`. Scripts 03-04, 07-08 target `KIBANA_URL`. Both use `ES_API_KEY` for auth. All seed data is **synthetic** (no real or confidential data).
 
 ---
 
@@ -335,7 +335,7 @@ terra-incognita/
 | **Elasticsearch 9.x** | Data store, semantic search (ELSER), index aliases for backtest |
 | **ELSER v2** | Semantic search via `semantic_text` field type |
 | **ES\|QL** | Parameterized queries for gap detection, density analysis, novelty verification |
-| **RRF Hybrid Search** | BM25 + Vector fusion for cross-domain bridge discovery |
+| **ELSER Semantic Search** | Sparse vector retrieval for cross-domain bridge discovery |
 | **Agent Builder** | 9-rule agent, tool orchestration, Converse API |
 | **FastMCP** | MCP server (Python 3.12, Streamable HTTP) |
 | **Google Cloud Run** | MCP server hosting (scale-to-zero) |
@@ -347,19 +347,19 @@ terra-incognita/
 
 ## Known Limitations
 
-- **Elastic Workflows** — Technical Preview execution engine bug in ES 9.x. All write and automation functionality migrated to MCP tools.
-- **ES|QL Write Operations** — ES|QL is SELECT-only; all writes flow through the MCP server.
-- **Kibana `.mcp` Connector Auth** — Does not forward `Authorization` headers to MCP servers. Mitigated with Cloud Run IAM authentication.
+- **Elastic Workflows**: Technical Preview execution engine bug in ES 9.x. All write and automation functionality migrated to MCP tools.
+- **ES|QL Write Operations**: ES|QL is SELECT-only; all writes flow through the MCP server.
+- **Kibana `.mcp` Connector Auth**: Does not forward `Authorization` headers to MCP servers. Mitigated with Cloud Run IAM authentication.
 
 ---
 
 ## Future Work
 
-- **Real-time Gap Alert** — Push notifications when a monitored gap starts filling
-- **Multi-corpus support** — Extend beyond arXiv to PubMed, IEEE, bioRxiv
-- **Collaborative Discovery** — Share Discovery Cards across research teams
-- **Citation graph integration** — Combine gap detection with citation network analysis
-- **Confidence calibration** — Track prediction accuracy over time to improve IVI/SP scoring
+- **Real-time Gap Alert**: Push notifications when a monitored gap starts filling
+- **Multi-corpus support**: Extend beyond arXiv to PubMed, IEEE, bioRxiv
+- **Collaborative Discovery**: Share Discovery Cards across research teams
+- **Citation graph integration**: Combine gap detection with citation network analysis
+- **Confidence calibration**: Track prediction accuracy over time to improve IVI/SP scoring
 
 ---
 
@@ -370,6 +370,6 @@ MIT License. See [LICENSE](LICENSE) for details.
 ---
 
 <p align="center">
-  <b>Terra Incognita</b> — Discovering what science hasn't explored yet.<br>
+  <b>Terra Incognita</b>: Discovering what science hasn't explored yet.<br>
   Built with <a href="https://www.elastic.co/elasticsearch">Elasticsearch</a> Agent Builder
 </p>
