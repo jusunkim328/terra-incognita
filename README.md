@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.webp" alt="Terra Incognita" width="400">
+</p>
+
 # Terra Incognita: Autonomous Scout for the Unknown
 
 [![Elasticsearch](https://img.shields.io/badge/Elasticsearch-9.x-005571?logo=elasticsearch&logoColor=white)](https://www.elastic.co/elasticsearch)
@@ -39,11 +43,11 @@ Every finding is packaged as a shareable Discovery Card with quantitative scores
 
 ```
 +----------------------------------------------+
-|  Zwitterionic Polymer x                      |
-|  Alzheimer's Amyloid-Beta                    |
+|  BBB-Penetrating Nanocarriers x              |
+|  Alzheimer's Therapeutics                    |
 |                                              |
-|  Innovation Vacuum: top 2%                   |
-|  Serendipity: top 5%                         |
+|  Innovation Vacuum: top 18%                  |
+|  Serendipity: top 6%                         |
 |  Cross-papers: 0 -- completely unexplored    |
 |                                              |
 |  Confidence: HIGH                            |
@@ -100,7 +104,7 @@ The agent adjusts DETECT parameters based on SURVEY results:
 
 ### Thought Log
 
-Every decision is exposed: ES|QL queries executed, index selection reasoning, self-correction judgments, parameter adjustment rationale. No black box.
+Every decision is exposed in a dedicated 💭 **Thought Log** section within the Discovery Card: domain profiling rationale, parameter adjustment reasoning, self-correction judgments (ACCEPTED/REJECTED with mechanistic reasoning), and cross-paper count interpretation. No black box.
 
 ---
 
@@ -110,14 +114,14 @@ A 3-minute, 4-act demonstration of autonomous research gap discovery:
 
 | Act | Title | What Happens |
 |-----|-------|-------------|
-| **1** | The Map | Agent surveys 17,000+ papers across 12 domains, produces relevance profile |
-| **2** | The Gap | Detects materials science gap (IVI: top 2%), auto-tunes parameters |
-| **3** | The Bridge | Self-Correction rejects false positive, discovers zwitterionic polymer bridge |
-| **4** | The Watch | Discovery Card + Cloud Scheduler automation (Daily Discovery + Gap Watch) |
+| **1** | The Map | Agent surveys 17,000+ papers across 12 domains, produces domain relevance table |
+| **2** | The Gap | Detects robotics (IVI: top 15%) and materials science (IVI: top 18%) gaps, auto-tunes parameters |
+| **3** | The Bridge | Self-Correction rejects bone tissue engineering (no CNS relevance), discovers BBB-penetrating peptide bridge (SP: top 6%) |
+| **4** | The Watch | Discovery Cards + Cloud Scheduler automation (Daily Discovery + Gap Watch) |
 
 **Demo Query**: *"Find unexplored research directions in Alzheimer's treatment"*
 
-**The Wow Moment**: Zwitterionic anti-fouling polymers (materials science) share a protein-adhesion-prevention mechanism with amyloid-beta aggregation inhibition (neuroscience), with **zero** cross-papers in our corpus. Two active fields, an intersection the agent surfaced on its own.
+**The Wow Moment**: A deep learning model for predicting blood-brain barrier penetrating peptides (materials science) provides a direct mechanism for delivering Alzheimer's therapeutics past the BBB (neuroscience), with **zero** cross-papers in our corpus. Both fields are thriving independently, but the intersection is empty.
 
 ---
 
@@ -149,7 +153,7 @@ The `semantic_text` field type handles tokenization, inference, and vector stora
 
 ### ELSER Semantic Search: Cross-Domain Discovery
 
-All tools query the `semantic_text` field via ELSER v2 sparse vector retrieval. Unlike BM25 keyword matching, ELSER captures semantic meaning, so a paper about "protein adhesion prevention" can match a query about "amyloid-beta aggregation" even without shared keywords. This is what makes cross-disciplinary bridge discovery possible.
+All tools query the `semantic_text` field via ELSER v2 sparse vector retrieval. Unlike BM25 keyword matching, ELSER captures semantic meaning, so a paper about "blood-brain barrier penetrating peptides" can match a query about "Alzheimer's drug delivery" even without shared keywords. This is what makes cross-disciplinary bridge discovery possible.
 
 ### Index Aliases: Time-Travel Backtesting
 
